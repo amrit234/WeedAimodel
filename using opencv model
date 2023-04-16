@@ -1,0 +1,80 @@
+import os
+import cv2
+import numpy as np
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from tensorflow.keras.optimizers import RMSprop
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.models import load_model
+
+# Set the directory paths
+original_dataset_dir = 'C:\\Users\\Asus\\Downloads\\Student Projects'
+base_dir = 'C:\\Users\\Asus\\Downloads\\Weed Dataset'
+train_dir = os.path.join(base_dir, 'train')
+val_dir = os.path.join(base_dir, 'val')
+
+# Define the image size
+img_width, img_height = 150, 150
+
+# Define the batch size
+batch_size = 16
+
+# Split the dataset into training and validation sets
+datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
+train_generator = datagen.flow_from_directory(train_dir, target_size=(img_width, img_height), batch_size=batch_size, class_mode='categorical', subset='training')
+val_generator = datagen.flow_from_directory(val_dir, target_size=(img_width, img_height), batch_size=batch_size, class_mode='categorical', subset='validation')
+
+# Build the model
+model = Sequential()
+model.add(Conv2D(32, (3, 3), activation='relu', input_shape=(img_width, img_height, 3)))
+model.add(MaxPooling2D((2, 2)))
+model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+model.add(Conv2D(128, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+model.add(Conv2D(128, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2, 2)))
+model.add(Flatten())
+model.add(Dense(512, activation='relu'))
+model.add(Dense(3, activation='softmax'))
+
+# Compile the model
+model.compile(loss='categorical_crossentropy', optimizer=RMSprop(lr=1e-4), metrics=['acc'])
+
+# Train the model
+early_stopping = EarlyStopping(monitor='val_loss', patience=3)
+history = model.fit(train_generator, epochs=30, validation_data=val_generator, callbacks=[early_stopping])
+
+# Save the trained model
+model.save('path/to/trained/model')
+
+# Define the class labels
+class_labels = ['weed_type_1', 'weed_type_2', 'weed_type_3']
+
+# Open the webcam
+cap = cv2.VideoCapture(0)
+
+# Set the window size
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+# Load the trained model
+model = load_model('path/to/trained/model')
+
+while True:
+    # Capture a frame from the webcam
+    ret, frame = cap.read()
+    
+    # Preprocess the image
+    img = cv2.resize(frame, (img_width, img_height))
+    img = img.astype("float32") / 255.0
+    img = np.expand_dims(img, axis=0)
+    
+    # Perform inference using the trained model
+    pred = model.predict(img)
+    class_idx = np.argmax(pred)
+    class_label = class_labels[class_idx]
+    
+    # Display the predicted class label on the screen
+    cv2.putText(frame)
