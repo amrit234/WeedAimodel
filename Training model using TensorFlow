@@ -1,0 +1,77 @@
+import os
+import shutil
+import random
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
+# Set the paths to the original dataset and the training/validation sets
+original_dataset_dir = "C:/Users/Asus/Downloads/Student Projects"
+train_dir = "C:/Users/Asus/Downloads/train"
+val_dir = "C:/Users/Asus/Downloads/val"
+
+# Set the percentage of images to use for validation
+validation_split = 0.2
+
+# Create the training and validation directories
+os.makedirs(train_dir, exist_ok=True)
+os.makedirs(val_dir, exist_ok=True)
+
+# Loop over the three classes of images and copy them to the training/validation directories
+for class_name in os.listdir(original_dataset_dir):
+    class_dir = os.path.join(original_dataset_dir, class_name)
+    if os.path.isdir(class_dir):
+        train_class_dir = os.path.join(train_dir, class_name)
+        val_class_dir = os.path.join(val_dir, class_name)
+        os.makedirs(train_class_dir, exist_ok=True)
+        os.makedirs(val_class_dir, exist_ok=True)
+        
+        # Split the images into training and validation sets
+        image_names = os.listdir(class_dir)
+        random.shuffle(image_names)
+        split_index = int(len(image_names) * validation_split)
+        val_images = image_names[:split_index]
+        train_images = image_names[split_index:]
+        
+        # Copy the images to the training/validation directories
+        for image_name in train_images:
+            src = os.path.join(class_dir, image_name)
+            dst = os.path.join(train_class_dir, image_name)
+            shutil.copyfile(src, dst)
+            
+        for image_name in val_images:
+            src = os.path.join(class_dir, image_name)
+            dst = os.path.join(val_class_dir, image_name)
+            shutil.copyfile(src, dst)
+
+# Define the input shape of the images
+input_shape = (150, 150, 3)
+
+# Define the CNN model
+model = models.Sequential([
+    # Convolutional layer with 32 filters and a 3x3 kernel
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+    # Max pooling layer with a 2x2 pool size
+    layers.MaxPooling2D((2, 2)),
+    
+    # Convolutional layer with 64 filters and a 3x3 kernel
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    # Max pooling layer with a 2x2 pool size
+    layers.MaxPooling2D((2, 2)),
+    
+    # Convolutional layer with 128 filters and a 3x3 kernel
+    layers.Conv2D(128, (3, 3), activation='relu'),
+    # Max pooling layer with a 2x2 pool size
+    layers.MaxPooling2D((2, 2)),
+    
+    # Convolutional layer with 128 filters and a 3x3 kernel
+    layers.Conv2D(128, (3, 3), activation='relu'),
+    # Max pooling layer with a 2x2 pool size
+    layers.MaxPooling2D((2, 2)),
+    
+    # Flatten the output of the convolutional layers
+    layers.Flatten(),
+    # Fully connected layer with 512 units and ReLU activation
+    layers.Dense(512, activation='relu'),
+    # Output layer with 3 units and softmax activation
+    layers.Dense(3, activation='softmax')
+])
