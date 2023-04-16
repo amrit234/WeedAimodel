@@ -1,0 +1,46 @@
+import os
+import random
+import shutil
+
+# Set the paths to the original dataset and the new split dataset
+original_dataset_dir = r'C:\Users\Asus\Downloads\Student Projects'
+train_dir = r'C:\Users\Asus\Downloads\train_data' # Changed directory name
+validation_dir = r'C:\Users\Asus\Downloads\val'
+
+# Set the percentage of data to be used for validation
+validation_split = 0.2
+
+# Create the training and validation directories
+os.mkdir(train_dir)
+os.mkdir(validation_dir)
+
+# Iterate over each class in the original dataset
+for class_name in os.listdir(original_dataset_dir):
+    # Create the subdirectories in the training and validation directories
+    os.mkdir(os.path.join(train_dir, class_name))
+    os.mkdir(os.path.join(validation_dir, class_name))
+    
+    # Get the list of image filenames for the current class
+    image_filenames = os.listdir(os.path.join(original_dataset_dir, class_name))
+    random.shuffle(image_filenames)
+    
+    # Calculate the number of images to be used for validation
+    num_val_images = int(len(image_filenames) * validation_split)
+    
+    # Copy the images to the appropriate directories
+    for i, filename in enumerate(image_filenames):
+        if i < num_val_images:
+            shutil.copy(os.path.join(original_dataset_dir, class_name, filename), os.path.join(validation_dir, class_name))
+        else:
+            shutil.copy(os.path.join(original_dataset_dir, class_name, filename), os.path.join(train_dir, class_name))
+
+
+
+
+
+
+
+
+
+
+
